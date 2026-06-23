@@ -1,0 +1,42 @@
+syntax = "proto2";
+message ShannonLteUECap {
+  //Version
+  required uint32 version = 1;
+
+  // Supported LTE carrier-aggregation combinations.
+  repeated Combo combos = 2;
+
+  //Bitmask
+  required uint32 bitmask = 3;
+}
+
+message Combo {
+  // Band components
+  repeated Component components = 1;
+ // BCS 0 uses bit 31, BCS 1 uses bit 30 etc
+  optional uint32 bcs = 2;
+  // conf_id from 0 to 63 uint64
+  required uint64 conf_id_1 = 3;
+  // conf_id 64 to 96 uint32
+  required uint32 conf_id_2 = 4;
+}
+
+message Component {
+  // LTE band number.
+  required int32 band = 1;
+  // A = 32768
+  // B = 16384
+  // C = 8192
+  // D = 4096
+  // E = 2048
+  // F = 1024
+  // Even num = 2L
+  // Odd num  = 4L
+  required int32 bwClassMimoDl = 2;
+  // ul bw class
+  // N/A = 0
+  // A = 32768
+  // C = 8192
+  // D = 4096
+  required int32 bwClassMimoUl = 3;
+}
