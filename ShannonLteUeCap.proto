@@ -30,13 +30,7 @@ message Component {
   // D = 4096
   // E = 2048
   // F = 1024
-  // Even num = 2L
-  // Odd num  = 4L
+  // If Odd num  = 4L e.g 32769, 8193, 4097 etc
   required int32 bwClassMimoDl = 2;
-  // ul bw class
-  // N/A = 0
-  // A = 32768
-  // C = 8192
-  // D = 4096
   required int32 bwClassMimoUl = 3;
 }
