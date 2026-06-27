@@ -151,7 +151,7 @@ In binary form:
 196 = 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 1100 0100
 ```
 
-Luckily, you can just use the ```Apply conf_id to combos``` to calculate the conf_id values for your PLMN group and apply the value to certain bands or all combos
+Luckily, you can just use the ```Apply conf_id to combos``` to calculate the conf_id values for your PLMN group and apply it to certain bands or all combos. If your PLMN does not belong to any conf_id groups, you must manually edit ```ap_plmn_mapping.binarypb```
 
 <img width="445" height="280" alt="image" src="https://github.com/user-attachments/assets/2fe087c6-d83d-4896-aad0-4322541dfd01" />
 
