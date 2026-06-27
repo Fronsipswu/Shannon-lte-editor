@@ -23,7 +23,7 @@ Features
 Validation Checks
 -----------------
 
-After editing, you can use the "validation" function to check for errors/typos/bad configurations, such as:
+After editing, you can use the ```Validation``` function to check for errors/typos/bad configurations, such as:
 
 - Duplicates
 - Missing uplink
