@@ -89,7 +89,7 @@ Bandwidth classes and MIMO per CC component
 ### 1. Bandwidth Classes (CC Count)
 The bandwidth class determines the number of aggregated Component Carriers (CC) for intra-band contiguous CA:
 
-| Class | Component Carriers (CC) |
+| Class | # Component Carriers (CC) |
 | :---: | :--- |
 | **A** | 1 |
 | **B** | 2 (≤20 MHz total) |
@@ -122,18 +122,18 @@ To solve this problem, use this Combo pruning function to reduce the total combo
 - Only including the LTE bands that you need
 - Removing unnecessary intra-band configurations such as ```3C``` or ```3+3```
 
-**PRO TIP:** The combinations in the `UE Capability Information` message follow the exact same order as they appear in the `.binarypb` file. Therfore, the first 128 combos should be something essential.
+**PRO TIP:** The combinations in the `UE Capability Information` message follow the exact same order as they appear in the `.binarypb` file. Therefore, the first 128 combos should be essential.
 
 PLMN mapping
 -------------
-<img width="800" alt="image" src="https://github.com/user-attachments/assets/ccf6fff1-0557-48cf-a75a-6493c6e1ffe1" />
+<img width="900" alt="image" src="https://github.com/user-attachments/assets/ccf6fff1-0557-48cf-a75a-6493c6e1ffe1" />
 
 Each combo is mapped to one or more ```conf_id``` values, and each ```conf_id``` represents a group of PLMNs defined in ```ap_plmn_mapping.binarypb```.
 
 The valid conf_id range is 0 to 95. Because 96 bits are required to represent all possible ```conf_id``` values, the mapping is split across two bitmask fields:
 
 - Conf ID 1 is a ```uint64``` bitmask representing ```conf_id``` 0 to 63.
-- Conf ID 2 is a ```uint32``` bitmask representing ```conf_id``` 64 to 95.
+- Conf ID 2 is a ```uint32``` bitmask representing ```conf_id``` 64 to 95 with a +64 offset
   
 For example, the ```conf_id``` values for TMO, DISH, and ROGERS are 2, 6, and 7 respectively. If a combo is mapped to these three PLMN groups, the value of ```Conf ID 1``` will be 196 because:
 
@@ -151,7 +151,14 @@ In binary form:
 196 = 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 1100 0100
 ```
 
-Fortunately, you can just use the conf_id calculator tool included in this prgram instead of manually calculating them.
+Luckily, you can just use the ```Apply conf_id to combos``` to calculate the conf_id values for your PLMN group and apply the value to certain bands or all combos
+
+<img width="445" height="280" alt="image" src="https://github.com/user-attachments/assets/2fe087c6-d83d-4896-aad0-4322541dfd01" />
+
+
+Tips and Tricks
+---------------
+- Try to keep the first 128 Combos essential
 
 Building your own executable
 -----------------------------
