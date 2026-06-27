@@ -32,7 +32,7 @@ After editing, you can use the "validation" function to check for errors/typos/b
 - Exceed 24 spatial streams
 - Unsupported low-band combinations (only 20+28 is supported)
 - Invalid DL/UL bw classes
-- Unsupported 4x4 DL MIMO assignments on low bands
+- 4x4 DL MIMO assignments on low bands
 
 Some of the errors can be fixed automatically, while some can only be highlighted for manual review.
 
