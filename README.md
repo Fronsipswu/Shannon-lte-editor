@@ -141,7 +141,7 @@ For example, the ```conf_id``` values for TMO, DISH, and ROGERS are 2, 6, and 7 
 
 2^6 = 64
 
-2^6 = 128
+2^7 = 128
 
 4 + 64 + 128 = 196
 
@@ -151,14 +151,9 @@ In binary form:
 196 = 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 1100 0100
 ```
 
-Luckily, you can just use the ```Apply conf_id to combos``` to calculate the conf_id values and apply it to certain bands or all combos. If your PLMN does not belong to any conf_id groups, you must manually edit ```ap_plmn_mapping.binarypb```
+Luckily, you can just use the ```Apply conf_id to combos``` function to calculate the conf_id values and apply it to certain bands or all combos. If your PLMN does not belong to any conf_id, you must manually edit ```ap_plmn_mapping.binarypb```
 
 <img width="445" height="280" alt="image" src="https://github.com/user-attachments/assets/2fe087c6-d83d-4896-aad0-4322541dfd01" />
-
-
-Tips and Tricks
----------------
-- Try to keep the first 128 Combos essential
 
 Building your own executable
 -----------------------------
