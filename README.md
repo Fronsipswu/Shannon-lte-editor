@@ -1,7 +1,7 @@
 Shannon LTE CA editor
 =====================
 
-A Python/Tkinter GUI editor to modify LTE CA combos on Pixel 9 and 10, featuring several useful tools to save editing effort.
+A Python/Tkinter GUI editor to modify LTE CA combos on Pixel 9 and 10, featuring useful tools to save editing effort.
 
 <img width="1000" alt="image" src="https://github.com/user-attachments/assets/bdec9472-ac56-4627-b4d4-c47ae4276a1f" />
 
