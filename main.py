@@ -151,6 +151,7 @@ class ComboEditorApp(tk.Tk):
         self.selected_plmn_conf_ids: set[int] = set()
 
         self.status_var = tk.StringVar(value="Ready")
+        self.component_cell_editor: Optional[tk.Widget] = None
 
         self._build_menu()
         self._build_ui()
@@ -677,16 +678,29 @@ class ComboEditorApp(tk.Tk):
             weight=1,
         )
 
-    def _build_component_editor(self, parent: ttk.Widget) -> None:
+    def _build_component_editor(
+        self,
+        parent: ttk.Widget,
+    ) -> None:
         component_frame = ttk.LabelFrame(
             parent,
             text="Band Components",
             padding=8,
         )
+
         component_frame.pack(
             fill="both",
             expand=True,
             pady=(10, 0),
+        )
+
+        table_frame = ttk.Frame(
+            component_frame
+        )
+
+        table_frame.pack(
+            fill="both",
+            expand=True,
         )
 
         component_columns = (
@@ -697,133 +711,77 @@ class ComboEditorApp(tk.Tk):
         )
 
         self.component_tree = ttk.Treeview(
-            component_frame,
+            table_frame,
             columns=component_columns,
             show="headings",
-            height=8,
+            selectmode="browse",
+            height=12,
         )
 
         for name, heading, width in (
-            ("index", "#", 20),
-            ("band", "Band", 30),
-            ("dl", "DL class/MIMO", 100),
-            ("ul", "UL class", 80),
+            ("index", "#", 35),
+            ("band", "Band", 60),
+            ("dl", "DL class/MIMO", 150),
+            ("ul", "UL class", 130),
         ):
             self.component_tree.heading(
                 name,
                 text=heading,
             )
+
             self.component_tree.column(
                 name,
                 width=width,
                 anchor="center",
             )
 
+        component_scroll = ttk.Scrollbar(
+            table_frame,
+            orient="vertical",
+            command=self.component_tree.yview,
+        )
+
+        self.component_tree.configure(
+            yscrollcommand=component_scroll.set,
+        )
+
         self.component_tree.pack(
+            side="left",
             fill="both",
             expand=True,
+        )
+
+        component_scroll.pack(
+            side="right",
+            fill="y",
         )
 
         self.component_tree.bind(
             "<<TreeviewSelect>>",
             self.on_component_selected,
         )
+
+        self.component_tree.bind(
+            "<Button-1>",
+            self._on_component_cell_click,
+        )
+
         self.component_tree.bind(
             "<Delete>",
             self.on_delete_component_key,
         )
 
-        component_editor = ttk.Frame(component_frame)
-        component_editor.pack(
-            fill="x",
-            pady=(8, 0),
+        self.component_tree.bind(
+            "<MouseWheel>",
+            lambda _event: (
+                self._close_component_cell_editor()
+            ),
         )
 
-        self.band_entry = self._labeled_entry(
-            component_editor,
-            "Band",
-            self.band_var,
-            0,
+        component_buttons = ttk.Frame(
+            component_frame
         )
 
-        self.band_entry.bind(
-            "<Return>",
-            lambda _event: self.apply_component_fields(),
-        )
-        self.band_entry.bind(
-            "<KP_Enter>",
-            lambda _event: self.apply_component_fields(),
-        )
-
-        ttk.Label(
-            component_editor,
-            text="DL Value",
-        ).grid(
-            row=1,
-            column=0,
-            sticky="w",
-            pady=3,
-        )
-
-        self.dl_combobox = ttk.Combobox(
-            component_editor,
-            textvariable=self.dl_var,
-            values=[
-                label
-                for _value, label in DL_VALUE_OPTIONS
-            ],
-            state="readonly",
-        )
-        self.dl_combobox.grid(
-            row=1,
-            column=1,
-            sticky="ew",
-            padx=(8, 0),
-            pady=3,
-        )
-
-        ttk.Label(
-            component_editor,
-            text="UL Value",
-        ).grid(
-            row=2,
-            column=0,
-            sticky="w",
-            pady=3,
-        )
-
-        self.ul_combobox = ttk.Combobox(
-            component_editor,
-            textvariable=self.ul_var,
-            values=[
-                label
-                for _value, label in UL_VALUE_OPTIONS
-            ],
-            state="readonly",
-        )
-        self.ul_combobox.grid(
-            row=2,
-            column=1,
-            sticky="ew",
-            padx=(8, 0),
-            pady=3,
-        )
-
-        self.dl_combobox.bind(
-            "<<ComboboxSelected>>",
-            self.on_component_value_changed,
-        )
-        self.ul_combobox.bind(
-            "<<ComboboxSelected>>",
-            self.on_component_value_changed,
-        )
-
-        component_editor.columnconfigure(
-            1,
-            weight=1,
-        )
-
-        component_buttons = ttk.Frame(component_frame)
         component_buttons.pack(
             fill="x",
             pady=(8, 0),
@@ -833,36 +791,528 @@ class ComboEditorApp(tk.Tk):
             component_buttons,
             text="Add band",
             command=self.add_component,
-        ).pack(side="left")
-
-        ttk.Button(
-            component_buttons,
-            text="Set band",
-            command=self.apply_component_fields,
         ).pack(
-            side="left",
-            padx=6,
+            side="left"
         )
 
         ttk.Button(
             component_buttons,
             text="Delete",
             command=self.delete_component,
-        ).pack(side="left")
+        ).pack(
+            side="left",
+            padx=(6, 0),
+        )
 
         ttk.Button(
             component_buttons,
             text="Move up",
-            command=lambda: self.move_component(-1),
-        ).pack(side="right")
+            command=lambda: (
+                self.move_component(-1)
+            ),
+        ).pack(
+            side="right"
+        )
 
         ttk.Button(
             component_buttons,
             text="Move down",
-            command=lambda: self.move_component(1),
+            command=lambda: (
+                self.move_component(1)
+            ),
         ).pack(
             side="right",
             padx=6,
+        )
+
+
+    def _close_component_cell_editor(
+        self,
+    ) -> None:
+        editor = self.component_cell_editor
+
+        if editor is not None:
+            try:
+                editor.destroy()
+            except tk.TclError:
+                pass
+
+        self.component_cell_editor = None
+
+
+    def _on_component_cell_click(
+        self,
+        event: tk.Event,
+    ) -> Optional[str]:
+        active_editor = self.component_cell_editor
+
+        # A click inside the same Treeview may not trigger FocusOut
+        # because this handler returns "break". Commit an active
+        # Band entry manually before opening another cell editor.
+        if isinstance(
+            active_editor,
+            ttk.Entry,
+        ):
+            commit_callback = getattr(
+                active_editor,
+                "commit_value",
+                None,
+            )
+
+            if commit_callback is not None:
+                commit_callback()
+
+                # If the editor is still active, validation failed.
+                if self.component_cell_editor is active_editor:
+                    return "break"
+
+        row_id = self.component_tree.identify_row(
+            event.y
+        )
+
+        column_id = self.component_tree.identify_column(
+            event.x
+        )
+
+        if not row_id:
+            self._close_component_cell_editor()
+            return None
+
+        # Row-number column: allow normal Treeview selection.
+        if column_id == "#1":
+            self._close_component_cell_editor()
+            return None
+
+        if column_id not in {
+            "#2",
+            "#3",
+            "#4",
+        }:
+            self._close_component_cell_editor()
+            return None
+
+        try:
+            component_index = int(
+                row_id
+            )
+        except ValueError:
+            return "break"
+
+        combo = self.get_selected_combo()
+
+        if combo is None:
+            return "break"
+
+        if not (
+            0
+            <= component_index
+            < len(combo.components)
+        ):
+            return "break"
+
+        self.selected_component_index = (
+            component_index
+        )
+
+        self.component_tree.selection_set(
+            row_id
+        )
+
+        self.component_tree.focus(
+            row_id
+        )
+
+        self.component_tree.see(
+            row_id
+        )
+
+        self.after_idle(
+            lambda: self._begin_component_cell_edit(
+                row_id=row_id,
+                column_id=column_id,
+                component_index=component_index,
+            )
+        )
+
+        return "break"
+
+
+    def _begin_component_cell_edit(
+        self,
+        row_id: str,
+        column_id: str,
+        component_index: int,
+    ) -> None:
+        self._close_component_cell_editor()
+
+        combo = self.get_selected_combo()
+
+        if combo is None:
+            return
+
+        if not (
+            0
+            <= component_index
+            < len(combo.components)
+        ):
+            return
+
+        bbox = self.component_tree.bbox(
+            row_id,
+            column_id,
+        )
+
+        if not bbox:
+            return
+
+        x, y, width, height = bbox
+
+        component = combo.components[
+            component_index
+        ]
+
+        if column_id == "#2":
+            editor = ttk.Entry(
+                self.component_tree
+            )
+
+            editor.insert(
+                0,
+                str(component.band),
+            )
+
+            editor.select_range(
+                0,
+                "end",
+            )
+
+            commit_in_progress = False
+
+            def commit_band(
+                _event=None,
+            ) -> None:
+                nonlocal commit_in_progress
+
+                if commit_in_progress:
+                    return
+
+                try:
+                    band = int(
+                        editor.get().strip(),
+                        10,
+                    )
+
+                except ValueError:
+                    messagebox.showerror(
+                        "Invalid band",
+                        "Band must be a positive integer.",
+                        parent=self,
+                    )
+
+                    editor.focus_set()
+                    return
+
+                if band <= 0:
+                    messagebox.showerror(
+                        "Invalid band",
+                        "Band must be a positive integer.",
+                        parent=self,
+                    )
+
+                    editor.focus_set()
+                    return
+
+                commit_in_progress = True
+
+                component.band = band
+
+                self._finish_component_cell_edit(
+                    component_index,
+                    f"Band changed to {band}",
+                )
+
+            # Store the callback so clicks inside the Treeview
+            # can commit the Band entry manually.
+            editor.commit_value = commit_band
+
+            editor.bind(
+                "<Return>",
+                commit_band,
+            )
+
+            editor.bind(
+                "<KP_Enter>",
+                commit_band,
+            )
+
+            editor.bind(
+                "<FocusOut>",
+                commit_band,
+            )
+
+        elif column_id == "#3":
+            editor = ttk.Combobox(
+                self.component_tree,
+                values=[
+                    label
+                    for _value, label
+                    in DL_VALUE_OPTIONS
+                ],
+                state="readonly",
+            )
+
+            editor.set(
+                DL_VALUE_TO_LABEL.get(
+                    str(component.bwClassMimoDl),
+                    str(component.bwClassMimoDl),
+                )
+            )
+
+            def commit_dl(
+                _event=None,
+            ) -> None:
+                raw_value = DL_LABEL_TO_VALUE.get(
+                    editor.get()
+                )
+
+                if raw_value is None:
+                    return
+
+                component.bwClassMimoDl = int(
+                    raw_value
+                )
+
+                self._finish_component_cell_edit(
+                    component_index,
+                    "DL class/MIMO updated",
+                )
+
+            editor.bind(
+                "<<ComboboxSelected>>",
+                commit_dl,
+            )
+
+            editor.bind(
+                "<Return>",
+                commit_dl,
+            )
+
+            editor.bind(
+                "<KP_Enter>",
+                commit_dl,
+            )
+
+        else:
+            editor = ttk.Combobox(
+                self.component_tree,
+                values=[
+                    label
+                    for _value, label
+                    in UL_VALUE_OPTIONS
+                ],
+                state="readonly",
+            )
+
+            editor.set(
+                UL_VALUE_TO_LABEL.get(
+                    str(component.bwClassMimoUl),
+                    str(component.bwClassMimoUl),
+                )
+            )
+
+            def commit_ul(
+                _event=None,
+            ) -> None:
+                raw_value = UL_LABEL_TO_VALUE.get(
+                    editor.get()
+                )
+
+                if raw_value is None:
+                    return
+
+                component.bwClassMimoUl = int(
+                    raw_value
+                )
+
+                self._finish_component_cell_edit(
+                    component_index,
+                    "UL class updated",
+                )
+
+            editor.bind(
+                "<<ComboboxSelected>>",
+                commit_ul,
+            )
+
+            editor.bind(
+                "<Return>",
+                commit_ul,
+            )
+
+            editor.bind(
+                "<KP_Enter>",
+                commit_ul,
+            )
+
+        editor.bind(
+            "<Escape>",
+            lambda _event: (
+                self._close_component_cell_editor()
+            ),
+        )
+
+        editor.place(
+            x=x,
+            y=y,
+            width=width,
+            height=height,
+        )
+
+        self.component_cell_editor = editor
+
+        editor.focus_set()
+
+        if isinstance(
+            editor,
+            ttk.Combobox,
+        ):
+            def open_dropdown(
+                current_editor=editor,
+            ) -> None:
+                try:
+                    if not current_editor.winfo_exists():
+                        return
+
+                    current_editor.focus_force()
+
+                    current_editor.tk.call(
+                        "ttk::combobox::Post",
+                        current_editor._w,
+                    )
+
+                except tk.TclError:
+                    pass
+
+            self.after_idle(
+                open_dropdown
+            )
+
+
+    def _finish_component_cell_edit(
+        self,
+        component_index: int,
+        status_message: str,
+    ) -> None:
+        self._close_component_cell_editor()
+
+        self.selected_component_index = (
+            component_index
+        )
+
+        self.refresh_combo_tree(
+            self.selected_combo_index
+        )
+
+        self.refresh_component_tree(
+            component_index
+        )
+
+        self.status_var.set(
+            status_message
+        )
+
+
+    def _finish_component_cell_edit(
+        self,
+        component_index: int,
+        status_message: str,
+    ) -> None:
+        self._close_component_cell_editor()
+
+        combo = self.get_selected_combo()
+
+        if combo is None:
+            return
+
+        if not (
+            0
+            <= component_index
+            < len(combo.components)
+        ):
+            return
+
+        self.selected_component_index = (
+            component_index
+        )
+
+        component = combo.components[
+            component_index
+        ]
+
+        component_row_id = str(
+            component_index
+        )
+
+        dl_label = DL_VALUE_TO_LABEL.get(
+            str(component.bwClassMimoDl),
+            str(component.bwClassMimoDl),
+        )
+
+        ul_label = UL_VALUE_TO_LABEL.get(
+            str(component.bwClassMimoUl),
+            str(component.bwClassMimoUl),
+        )
+
+        # Update only the edited component row.
+        if self.component_tree.exists(
+            component_row_id
+        ):
+            self.component_tree.item(
+                component_row_id,
+                values=(
+                    component_index + 1,
+                    component.band,
+                    dl_label,
+                    ul_label,
+                ),
+            )
+
+            self.component_tree.selection_set(
+                component_row_id
+            )
+
+            self.component_tree.focus(
+                component_row_id
+            )
+
+            self.component_tree.see(
+                component_row_id
+            )
+
+        # Update the corresponding main combo row without
+        # selecting it or triggering on_combo_selected().
+        combo_index = self.selected_combo_index
+
+        if combo_index is not None:
+            combo_row_id = str(
+                combo_index
+            )
+
+            if self.combo_tree.exists(
+                combo_row_id
+            ):
+                self.combo_tree.item(
+                    combo_row_id,
+                    values=self._combo_row_values(
+                        combo_index,
+                        combo,
+                    ),
+                )
+
+        self.load_component_editor()
+
+        self.status_var.set(
+            status_message
         )
 
     @staticmethod
@@ -1496,8 +1946,12 @@ class ComboEditorApp(tk.Tk):
         self,
         select_index: Optional[int] = None,
     ) -> None:
+        self._close_component_cell_editor()
+
         for item in self.component_tree.get_children():
-            self.component_tree.delete(item)
+            self.component_tree.delete(
+                item
+            )
 
         combo = self.get_selected_combo()
 
@@ -1509,6 +1963,16 @@ class ComboEditorApp(tk.Tk):
         for index, component in enumerate(
             combo.components
         ):
+            dl_label = DL_VALUE_TO_LABEL.get(
+                str(component.bwClassMimoDl),
+                str(component.bwClassMimoDl),
+            )
+
+            ul_label = UL_VALUE_TO_LABEL.get(
+                str(component.bwClassMimoUl),
+                str(component.bwClassMimoUl),
+            )
+
             self.component_tree.insert(
                 "",
                 "end",
@@ -1516,8 +1980,8 @@ class ComboEditorApp(tk.Tk):
                 values=(
                     index + 1,
                     component.band,
-                    component.bwClassMimoDl,
-                    component.bwClassMimoUl,
+                    dl_label,
+                    ul_label,
                 ),
             )
 
@@ -1542,17 +2006,28 @@ class ComboEditorApp(tk.Tk):
             ),
         )
 
-        self.component_tree.selection_set(
-            str(select_index)
-        )
-        self.component_tree.focus(
-            str(select_index)
-        )
-        self.component_tree.see(
-            str(select_index)
+        row_id = str(
+            select_index
         )
 
-        self.selected_component_index = select_index
+        self.component_tree.selection_set(
+            row_id
+        )
+
+        self.component_tree.focus(
+            row_id
+        )
+
+        self.component_tree.see(
+            row_id
+        )
+
+        self.selected_component_index = (
+            select_index
+        )
+
+        # Keep the old StringVar values synchronized,
+        # even though the old controls are no longer visible.
         self.load_component_editor()
 
     def on_combo_selected(
@@ -2174,55 +2649,63 @@ class ComboEditorApp(tk.Tk):
             f"+{self.winfo_rooty() + 40}"
         )
 
-    def add_component(self) -> None:
+    def add_component(
+        self,
+    ) -> None:
         combo = self.get_selected_combo()
 
         if combo is None:
             messagebox.showinfo(
                 "No combination",
-                "Add or select a combination first",
+                "Add or select a combination first.",
+                parent=self,
             )
             return
 
-        try:
-            component = Component(
-                band=self._int_value(
-                    self.band_var.get(),
-                    "Band",
-                ),
-                bwClassMimoDl=self._dropdown_value(
-                    self.dl_var.get(),
-                    DL_LABEL_TO_VALUE,
-                    "DL value",
-                ),
-                bwClassMimoUl=self._dropdown_value(
-                    self.ul_var.get(),
-                    UL_LABEL_TO_VALUE,
-                    "UL value",
-                ),
+        combo.components.append(
+            Component(
+                band=1,
+                bwClassMimoDl=32768,
+                bwClassMimoUl=0,
             )
-        except ValueError as exc:
-            messagebox.showerror(
-                "Invalid value",
-                str(exc),
-            )
-            return
+        )
 
-        combo.components.append(component)
-
-        self.selected_component_index = (
+        new_index = (
             len(combo.components) - 1
         )
 
-        self.refresh_component_tree(
-            self.selected_component_index
+        self.selected_component_index = (
+            new_index
         )
+
         self.refresh_combo_tree(
             self.selected_combo_index
         )
 
+        self.refresh_component_tree(
+            new_index
+        )
+
         self.status_var.set(
             "Band component added"
+        )
+
+        def open_new_band_editor() -> None:
+            row_id = str(
+                new_index
+            )
+
+            if self.component_tree.exists(
+                row_id
+            ):
+                self._begin_component_cell_edit(
+                    row_id=row_id,
+                    column_id="#2",
+                    component_index=new_index,
+                )
+
+        self.after_idle(
+            open_new_band_editor
         )
 
     def apply_component_fields(
