@@ -1059,6 +1059,7 @@ class ComboEditorApp(tk.Tk):
                     in DL_VALUE_OPTIONS
                 ],
                 state="readonly",
+                height=len(DL_VALUE_OPTIONS),
             )
 
             editor.set(
@@ -2507,8 +2508,7 @@ class ComboEditorApp(tk.Tk):
         ttk.Label(
             outer,
             text=(
-                "conf_id 0 is implicit and is not "
-                "stored as bit 0."
+                "conf_id 0 is hidden and always included as bit 0."
             ),
         ).pack(
             anchor="w",
@@ -2526,23 +2526,32 @@ class ComboEditorApp(tk.Tk):
         )
 
         selected_ids = masks_to_conf_ids(
-            combo.configMaskLow,
+            combo.configMaskLow | 1,
             combo.configMaskHigh,
+            include_bit_zero=True,
         )
+
+        selected_ids.add(0)
 
         checkbox_vars: dict[int, tk.BooleanVar] = {}
 
         def current_selected_ids() -> set[int]:
-            return {
+            result = {
                 conf_id
                 for conf_id, variable
                 in checkbox_vars.items()
                 if variable.get()
             }
 
+            # conf_id 0 is hidden but always enabled.
+            result.add(0)
+
+            return result
+
         def update_values(*_args) -> None:
             low_mask, high_mask = conf_ids_to_masks(
-                current_selected_ids()
+                current_selected_ids(),
+                include_bit_zero=True,
             )
 
             low_value_var.set(
@@ -2597,7 +2606,8 @@ class ComboEditorApp(tk.Tk):
 
         def apply_mapping() -> None:
             low_mask, high_mask = conf_ids_to_masks(
-                current_selected_ids()
+                current_selected_ids(),
+                include_bit_zero=True,
             )
 
             combo.configMaskLow = low_mask
