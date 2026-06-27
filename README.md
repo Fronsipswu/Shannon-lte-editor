@@ -1,7 +1,10 @@
 Shannon LTE CA editor
 =====================
 
-A Python/Tkinter-based GUI editor to edit LTE CA combos on Google Pixel 9 and 10 with a bunch of useful tools to save editing effort.
+A Python/Tkinter GUI editor to modify LTE CA combos on Pixel 9 and 10, featuring several useful tools to save editing effort.
+
+<img width="1000" alt="image" src="https://github.com/user-attachments/assets/bdec9472-ac56-4627-b4d4-c47ae4276a1f" />
+
 
 Features
 --------
@@ -20,7 +23,7 @@ Features
 Validation Checks
 -----------------
 
-After editing the combos, you can use the "validation" feature to check for any errors/typos/bad configurations such as:
+After editing, you can use the "validation" function to check for errors/typos/bad configurations, such as:
 
 - Duplicates
 - Missing uplink
@@ -33,17 +36,6 @@ After editing the combos, you can use the "validation" feature to check for any 
 
 Some of the errors can be fixed automatically, while some can only be highlighted for manual review.
 
-Requirements
-------------
-
-- Python 3.10 or newer
-- protobuf
-- PyInstaller, only when building a standalone executable
-
-Install dependencies with:
-
-    py -m pip install protobuf pyinstaller
-
 Running
 -------
 For Windows users, you can download the executable from the **Releases** section and run it directly without installing any dependencies. Alternatively, you can run `main.py`.
@@ -52,14 +44,24 @@ From the project folder:
 
     py main.py
 
+However, you will need...
+
+- Python 3.10+
+- protobuf
+- PyInstaller (if you want to compile your own version)
+
+Install dependencies with:
+
+    py -m pip install protobuf pyinstaller
+
 Using the auto combo generator
 --------------------------
-<img width="642" height="331" alt="image" src="https://github.com/user-attachments/assets/0d47df04-569f-405a-97a7-8d389ef6af46" />
+<img width="600" alt="image" src="https://github.com/user-attachments/assets/0d47df04-569f-405a-97a7-8d389ef6af46" />
 
 
-Step 1: Input a "large" combo such as
+Input a "large" combo such as
 ```1+1+3+3+8B+28+32+40D+41```.
-The function will generate the subsets such as ```1+1```, ```1+3```, ```1+3+8```, ```1+3+8B```, ```1+1+3+28```, ```1+40```. ```1+40C```etc, and assign the appropriate bw classes and mimo capability to each of them automatically.
+The function will generate sub-sets such as ```1+1```, ```1+3```, ```1+3+8```, ```1+3+8B```, ```1+1+3+28```, ```1+40```. ```1+40C```etc, and assign the appropriate bw classes and mimo capability to each of them automatically. Most networks do not support more than 5CA, hence Max CC is 5 by default. BCS determines the allowable bandwidths in a combo, and in most cases, BCS=0 works fine except for cases such as ```1+3``` where B1 can't be 3 MHz without BCS=0,1.
 
 The generator automatically avoids "impossible" configurations such as:
 
@@ -74,81 +76,87 @@ For example, ```1C+3C+7C+28``` with MIMO ```4+4+4+4+4+4+2 (26)``` will be broken
 - ```4+4+2+2+4+4+2```
 - ```4+4+4+4+2+2+2```
 
-If your network has a max-cc limit,
+Uplink class A will be assigned to the generated combos automaticall. For ULCA, there are several options to choose from:
 
-Using the auto combo generator
---------------------------
-
+- ```None selected``` only intraband-contiguous ULCA such as 3C, 7C, 40C, 41C.
+- ```Allow FDD A+A``` Both intra-band and inter-band non-contiguous ULCA for FDD only. Inter-band A+A works fine for most networks.
+- ```Allow TDD A+A``` Very uncommon.
+- ```Allow TDD+FDD``` Unlikely to work.
 
 Bandwidth classes and MIMO per CC component
 -----------------
 
-Class A = 1 CC
-Class B = 2 CC
-Class C = 2 CC
-Class D = 3 CC
-Class E = 4 CC
-Class F = 5 CC
+### 1. Bandwidth Classes (CC Count)
+The bandwidth class determines the number of aggregated Component Carriers (CC) for intra-band contiguous CA:
 
-The least-significant bit of the DL value represents MIMO mode:
+| Class | Component Carriers (CC) |
+| :---: | :--- |
+| **A** | 1 |
+| **B** | 2 (≤20 MHz total) |
+| **C** | 2 |
+| **D** | 3 |
+| **E** | 4 |
+| **F** | 5 |
 
-Even value
-    2x2 DL MIMO
+Note: Class B is very uncommon
 
-Odd value
-    4x4 DL MIMO
+The **least-significant bit** determines the DL MIMO mode. You can instantly identify this by seeing if the last decimal is even or odd:
 
-Examples:
+For example:
 
-    32768 = Class A, 2x2
-    32769 = Class A, 4x4
-    8192  = Class C, 2x2
-    8193  = Class C, 4x4
+```text
+32768 --> 1000 0000 0000 0000 --> Class A, 2x2 MIMO (Even)
+32769 --> 1000 0000 0000 0001 --> Class A, 4x4 MIMO (Odd)
+ 8192 --> 0010 0000 0000 0000 --> Class C, 2x2 MIMO (Even)
+ 8193 --> 0010 0000 0000 0001 --> Class C, 4x4 MIMO (Odd)
+```
 
 Combo Pruning
 -------------
+<img width="612" height="177" alt="image" src="https://github.com/user-attachments/assets/b801740e-f111-4c13-b7b5-001a05376643" />
 
-Example allowed-band list:
+This function will come in handy if your network does not configure ```requestedFrequencyBands-r11```. Without this parameter, your device can only report up to 128 combos in the ```UE Capability Information``` message and the rest will be cut off. 
 
-    1, 3, 8, 28, 40, 41
+To solve this problem, use this Combo pruning function to reduce the total combo count by:
 
-Example exclusions:
+- Only including the LTE bands that you need
+- Removing unnecessary intra-band configurations such as ```3C``` or ```3+3```
 
-    1+1, 3+3, 40D, 41E
+**PRO TIP:** The combinations in the `UE Capability Information` message follow the exact same order as they appear in the `.binarypb` file. Therfore, the first 128 combos should be something essential.
 
-Meaning:
+PLMN mapping
+-------------
+<img width="800" alt="image" src="https://github.com/user-attachments/assets/ccf6fff1-0557-48cf-a75a-6493c6e1ffe1" />
 
-    1+1
-        Remove combinations containing repeated Band 1 components.
+Each combo is mapped to one or more ```conf_id``` values, and each ```conf_id``` represents a group of PLMNs defined in ```ap_plmn_mapping.binarypb```.
 
-    40D
-        Remove Band 40 Class D and higher.
-        Lower classes such as 40A and 40C remain allowed.
+The valid conf_id range is 0 to 95. Because 96 bits are required to represent all possible ```conf_id``` values, the mapping is split across two bitmask fields:
 
-conf_id Handling
-----------------
+- Conf ID 1 is a ```uint64``` bitmask representing ```conf_id``` 0 to 63.
+- Conf ID 2 is a ```uint32``` bitmask representing ```conf_id``` 64 to 95.
+  
+For example, the ```conf_id``` values for TMO, DISH, and ROGERS are 2, 6, and 7 respectively. If a combo is mapped to these three PLMN groups, the value of ```Conf ID 1``` will be 196 because:
 
-The program stores conf_id mappings using two bitmasks:
+2^2 = 4
 
-configMaskLow
-    conf_id 0 through 63
+2^6 = 64
 
-configMaskHigh
-    conf_id 64 through 95
+2^6 = 128
 
-The GUI can convert between named conf_id entries and the two mask values.
+4 + 64 + 128 = 196
 
-Building a Windows Executable
+In binary form:
+
+```text
+196 = 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 1100 0100
+```
+
+Fortunately, you can just use the conf_id calculator tool included in this prgram instead of manually calculating them.
+
+Building your own executable
 -----------------------------
 
 From the project folder:
-
-    py -m PyInstaller --noconfirm --onefile --windowed ^
-      --name "Shannon LTE CA editor" ^
-      --collect-all google.protobuf ^
-      main.py
-
-Single-line version:
 
     py -m PyInstaller --noconfirm --onefile --windowed --name "Shannon LTE CA editor" --collect-all google.protobuf main.py
 
@@ -157,32 +165,30 @@ The executable will be created in the dist folder.
 Project Files
 -------------
 
-main.py
+```main.py```
     Main Tkinter application.
 
-utils.py
+```utils.py```
     Protobuf parsing, import/export, data models, UL generation,
-    validation, repair, and shared LTE utilities.
+    validation, repair, and other LTE utilities.
 
-custom_utils.py
+```custom_utils.py```
     Custom-combination generation, band filtering, exclusion rules,
     DL MIMO generation, and hardware-limit handling.
 
-tools_ui.py
-    Dialog windows for generation, pruning, conf_id mapping,
-    validation, and repair.
+```tools_ui.py```
+    Dialog windows for the auto combo generator, combo pruning, conf_id mapping, and
+    validation.
 
-conf_id.py
-    conf_id names (plmn groups) and bitmask conversion helpers.
+```conf_id.py```
+    conf_id names and bitmask conversion helpers.
 
 Important Notes
 ---------------
 
-- Keep main.py, utils.py, custom_utils.py, tools_ui.py, and conf_id.py in the same folder.
-- Always keep a backup of the original .binarypb file.
-- Validation cannot guarantee modem or network compatibility.
-- Some combinations may be syntactically valid but unsupported by a specific device, firmware, carrier configuration, or radio front end.
-- Test modified capability files carefully.
+- Always Keep main.py, utils.py, custom_utils.py, tools_ui.py, and conf_id.py in the same folder.
+- Validation only fixes the combo format and does not guarantee network compatibility.
+- Test unusual combos at your own risk.
 
 Credits / Acknowledgements
 ----------
