@@ -1235,8 +1235,9 @@ def generate_ul_variants(
     document: ComboDocument,
     selected_index: int,
     include_ulca: bool,
+    allow_fdd_aa_ulca: bool = False,
+    allow_tdd_aa_ulca: bool = False,
     allow_fdd_tdd_ulca: bool = False,
-    allow_tdd_tdd_ulca: bool = False,
 ) -> UlVariantResult:
     if not (
         0
@@ -1280,9 +1281,17 @@ def generate_ul_variants(
 
     candidates = _candidate_ul_variants(
         source,
-        include_ulca,
-        allow_fdd_tdd_ulca,
-        allow_tdd_tdd_ulca,
+        include_ulca=include_ulca,
+        allow_fdd_aa_ulca=(
+            allow_fdd_aa_ulca
+        ),
+        allow_tdd_aa_ulca=(
+            allow_tdd_aa_ulca
+        ),
+        allow_fdd_tdd_ulca=(
+            allow_fdd_tdd_ulca
+        ),
+        include_class_c_ul=True,
     )
 
     unique_candidates: list[Combo] = []

@@ -2245,7 +2245,14 @@ class ComboEditorApp(tk.Tk):
                 self.document,
                 self.selected_combo_index,
                 include_ulca=include_ulca,
+
+                # The manual Auto fill ULCA button allows A+A
+                allow_fdd_aa_ulca=include_ulca,
+                
+                allow_tdd_aa_ulca=False,
+                allow_fdd_tdd_ulca=False,
             )
+
         except ValueError as exc:
             messagebox.showinfo(
                 "Cannot generate UL variants",
@@ -2258,6 +2265,7 @@ class ComboEditorApp(tk.Tk):
         self.refresh_combo_tree(
             self.selected_combo_index
         )
+
         self.refresh_component_tree()
 
         if result.created_count == 0:
