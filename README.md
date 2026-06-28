@@ -63,6 +63,8 @@ Input a "large" combo such as
 ```1+1+3+3+8B+28+32+40D+41```.
 The function will generate fallback sets such as ```1+1```, ```1+3```, ```1+3+8```, ```1+3+8B```, ```1+1+3+28```, ```1+40```. ```1+40C```etc, and assign the appropriate bw classes and mimo capability to each of them automatically. Most networks do not support more than 5CA, hence Max CC is 5 by default. BCS determines the allowable bandwidths in a combo, and in most cases, BCS=0 works fine except for cases such as ```1+3``` where B1 can't be 3 MHz without BCS=0,1.
 
+If a combo already exists, it will be skipped to avoid duplication.
+
 The generator automatically avoids "impossible" configurations such as:
 
 - Anything besides ```20+28``` for low band CA
