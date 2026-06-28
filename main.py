@@ -1677,6 +1677,7 @@ class ComboEditorApp(tk.Tk):
             dialog,
             padding=12,
         )
+
         outer.pack(
             fill="both",
             expand=True,
@@ -1698,16 +1699,22 @@ class ComboEditorApp(tk.Tk):
             text="Select PLMN/conf_id mappings",
             padding=8,
         )
+
         checkbox_frame.pack(
             fill="both",
             expand=True,
         )
 
-        checkbox_vars: dict[int, tk.BooleanVar] = {}
+        checkbox_vars: dict[
+            int,
+            tk.BooleanVar,
+        ] = {}
 
         visible_conf_ids = [
             conf_id
-            for conf_id in sorted(CONF_ID_NAMES)
+            for conf_id in sorted(
+                CONF_ID_NAMES
+            )
             if conf_id != 0
         ]
 
@@ -1723,7 +1730,10 @@ class ComboEditorApp(tk.Tk):
                     in self.selected_plmn_conf_ids
                 )
             )
-            checkbox_vars[conf_id] = variable
+
+            checkbox_vars[
+                conf_id
+            ] = variable
 
             ttk.Checkbutton(
                 checkbox_frame,
@@ -1746,13 +1756,13 @@ class ComboEditorApp(tk.Tk):
                 weight=1,
             )
 
-        def select_all() -> None:
-            for variable in checkbox_vars.values():
-                variable.set(True)
-
-        def clear_all() -> None:
-            for variable in checkbox_vars.values():
-                variable.set(False)
+        def reset_filter() -> None:
+            for variable in (
+                checkbox_vars.values()
+            ):
+                variable.set(
+                    False
+                )
 
         def apply_filter() -> None:
             self.selected_plmn_conf_ids = {
@@ -1768,17 +1778,23 @@ class ComboEditorApp(tk.Tk):
 
             if selected_count:
                 self.plmn_filter_label_var.set(
-                    f"PLMN filter ({selected_count})"
+                    f"PLMN filter "
+                    f"({selected_count})"
                 )
+
             else:
                 self.plmn_filter_label_var.set(
                     "PLMN filter"
                 )
 
             self.refresh_combo_tree()
+
             dialog.destroy()
 
-        button_frame = ttk.Frame(outer)
+        button_frame = ttk.Frame(
+            outer
+        )
+
         button_frame.pack(
             fill="x",
             pady=(10, 0),
@@ -1786,24 +1802,19 @@ class ComboEditorApp(tk.Tk):
 
         ttk.Button(
             button_frame,
-            text="Select all",
-            command=select_all,
-        ).pack(side="left")
-
-        ttk.Button(
-            button_frame,
-            text="Clear all",
-            command=clear_all,
+            text="Reset",
+            command=reset_filter,
         ).pack(
-            side="left",
-            padx=(6, 0),
+            side="left"
         )
 
         ttk.Button(
             button_frame,
             text="Apply filter",
             command=apply_filter,
-        ).pack(side="right")
+        ).pack(
+            side="right"
+        )
 
         ttk.Button(
             button_frame,
@@ -1815,6 +1826,7 @@ class ComboEditorApp(tk.Tk):
         )
 
         dialog.update_idletasks()
+
         dialog.geometry(
             f"+{self.winfo_rootx() + 40}"
             f"+{self.winfo_rooty() + 40}"
@@ -2436,6 +2448,7 @@ class ComboEditorApp(tk.Tk):
             mapper,
             padding=12,
         )
+
         outer.pack(
             fill="both",
             expand=True,
@@ -2446,6 +2459,7 @@ class ComboEditorApp(tk.Tk):
             text="Calculated values",
             padding=8,
         )
+
         value_frame.pack(
             fill="x",
             pady=(0, 10),
@@ -2508,7 +2522,8 @@ class ComboEditorApp(tk.Tk):
         ttk.Label(
             outer,
             text=(
-                "conf_id 0 is hidden and always included as bit 0."
+                "conf_id 0 is hidden and always "
+                "included as bit 0."
             ),
         ).pack(
             anchor="w",
@@ -2520,6 +2535,7 @@ class ComboEditorApp(tk.Tk):
             text="Select conf_id mapping",
             padding=8,
         )
+
         checkbox_frame.pack(
             fill="both",
             expand=True,
@@ -2531,9 +2547,14 @@ class ComboEditorApp(tk.Tk):
             include_bit_zero=True,
         )
 
-        selected_ids.add(0)
+        selected_ids.add(
+            0
+        )
 
-        checkbox_vars: dict[int, tk.BooleanVar] = {}
+        checkbox_vars: dict[
+            int,
+            tk.BooleanVar,
+        ] = {}
 
         def current_selected_ids() -> set[int]:
             result = {
@@ -2544,11 +2565,15 @@ class ComboEditorApp(tk.Tk):
             }
 
             # conf_id 0 is hidden but always enabled.
-            result.add(0)
+            result.add(
+                0
+            )
 
             return result
 
-        def update_values(*_args) -> None:
+        def update_values(
+            *_args,
+        ) -> None:
             low_mask, high_mask = conf_ids_to_masks(
                 current_selected_ids(),
                 include_bit_zero=True,
@@ -2557,13 +2582,16 @@ class ComboEditorApp(tk.Tk):
             low_value_var.set(
                 str(low_mask)
             )
+
             high_value_var.set(
                 str(high_mask)
             )
 
         visible_conf_ids = [
             conf_id
-            for conf_id in sorted(CONF_ID_NAMES)
+            for conf_id in sorted(
+                CONF_ID_NAMES
+            )
             if conf_id != 0
         ]
 
@@ -2574,9 +2602,14 @@ class ComboEditorApp(tk.Tk):
             column = display_index // 10
 
             variable = tk.BooleanVar(
-                value=conf_id in selected_ids
+                value=(
+                    conf_id in selected_ids
+                )
             )
-            checkbox_vars[conf_id] = variable
+
+            checkbox_vars[
+                conf_id
+            ] = variable
 
             variable.trace_add(
                 "write",
@@ -2604,6 +2637,22 @@ class ComboEditorApp(tk.Tk):
                 weight=1,
             )
 
+        def select_all() -> None:
+            for variable in (
+                checkbox_vars.values()
+            ):
+                variable.set(
+                    True
+                )
+
+        def reset_mapping() -> None:
+            for variable in (
+                checkbox_vars.values()
+            ):
+                variable.set(
+                    False
+                )
+
         def apply_mapping() -> None:
             low_mask, high_mask = conf_ids_to_masks(
                 current_selected_ids(),
@@ -2616,6 +2665,7 @@ class ComboEditorApp(tk.Tk):
             self.configMaskLow_var.set(
                 str(low_mask)
             )
+
             self.configMaskHigh_var.set(
                 str(high_mask)
             )
@@ -2630,7 +2680,10 @@ class ComboEditorApp(tk.Tk):
 
             mapper.destroy()
 
-        button_frame = ttk.Frame(outer)
+        button_frame = ttk.Frame(
+            outer
+        )
+
         button_frame.pack(
             fill="x",
             pady=(10, 0),
@@ -2638,9 +2691,28 @@ class ComboEditorApp(tk.Tk):
 
         ttk.Button(
             button_frame,
+            text="Reset",
+            command=reset_mapping,
+        ).pack(
+            side="left"
+        )
+
+        ttk.Button(
+            button_frame,
+            text="Select all",
+            command=select_all,
+        ).pack(
+            side="left",
+            padx=(6, 0),
+        )
+
+        ttk.Button(
+            button_frame,
             text="Apply mapping",
             command=apply_mapping,
-        ).pack(side="right")
+        ).pack(
+            side="right"
+        )
 
         ttk.Button(
             button_frame,
@@ -2654,6 +2726,7 @@ class ComboEditorApp(tk.Tk):
         update_values()
 
         mapper.update_idletasks()
+
         mapper.geometry(
             f"+{self.winfo_rootx() + 40}"
             f"+{self.winfo_rooty() + 40}"

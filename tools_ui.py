@@ -1346,6 +1346,18 @@ class ConfIdDialog(
                 pady=2,
             )
 
+        def select_all() -> None:
+            for variable in variables.values():
+                variable.set(
+                    True
+                )
+
+        def reset_mapping() -> None:
+            for variable in variables.values():
+                variable.set(
+                    False
+                )
+
         def apply_mapper_values() -> None:
             self.conf_low_var.set(
                 calculated_low_var.get()
@@ -1364,6 +1376,23 @@ class ConfIdDialog(
         buttons.pack(
             fill="x",
             pady=(10, 0),
+        )
+
+        ttk.Button(
+            buttons,
+            text="Reset",
+            command=reset_mapping,
+        ).pack(
+            side="left"
+        )
+
+        ttk.Button(
+            buttons,
+            text="Select all",
+            command=select_all,
+        ).pack(
+            side="left",
+            padx=(6, 0),
         )
 
         ttk.Button(
