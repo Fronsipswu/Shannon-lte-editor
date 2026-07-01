@@ -1144,27 +1144,29 @@ def set_single_class_c_ul(
 def dl_base_signature(
     combo: Combo,
 ) -> tuple:
-    # Identify a combo by its ordered downlink band/class values.
     return tuple(
-        (
-            component.band,
-            component.bwClassMimoDl,
+        sorted(
+            (
+                component.band,
+                component.bwClassMimoDl,
+            )
+            for component in combo.components
         )
-        for component in combo.components
     )
 
 
 def full_config_signature(
     combo: Combo,
 ) -> tuple:
-    # Identify an exact ordered DL/UL configuration.
     return tuple(
-        (
-            component.band,
-            component.bwClassMimoDl,
-            component.bwClassMimoUl,
+        sorted(
+            (
+                component.band,
+                component.bwClassMimoDl,
+                component.bwClassMimoUl,
+            )
+            for component in combo.components
         )
-        for component in combo.components
     )
 
 def _candidate_ul_variants(

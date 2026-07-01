@@ -679,11 +679,13 @@ def component_dl_signature(
     components: list[Component],
 ) -> tuple:
     return tuple(
-        (
-            component.band,
-            component.bwClassMimoDl,
+        sorted(
+            (
+                component.band,
+                component.bwClassMimoDl,
+            )
+            for component in components
         )
-        for component in components
     )
 
 
